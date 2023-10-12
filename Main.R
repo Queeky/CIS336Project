@@ -33,11 +33,13 @@ seeMenu = function(db) {
   
   while (choice != 0) {
     print("[1] See line graph of a company's change in share price")
+    print("[2] See histogram of the highest/lowest 3 share prices")
     choice = readline("Select an action (0 to exit): ")
     
     result = switch(
       choice, 
-      "1" = showShareLGraph(db)
+      "1" = showShareLGraph(db),
+      "2" = createHistogram(db)
     )
   }
 }
@@ -67,6 +69,39 @@ showShareLGraph = function(db) {
   
   graph = ggplot(data = shares, aes(x = DATE, y = PRICE, group = 1)) + geom_line()
   print(graph)
+}
+
+createHistogram = function(db){
+  
+  # Asks for user input
+  choice = readline("Select 1 to view the highest 3 shares and 2 to view the lowest 3 shares:  ")
+  
+  #Calculates highest shares
+  if (choice == "1") {
+    query1 <- "SELECT X.COMP_ID, X.SHARE_PRICE
+               FROM SHARE X
+               GROUP BY X.COMP_ID
+               ORDER BY X.SHARE_PRICE DESC
+               LIMIT 3"
+    shares <- dbGetQuery(db, query1)
+    print(shares)
+  }
+  
+  #Calculates lowest shares
+  if (choice == "2") {
+    query2 <- "SELECT X.COMP_ID, X.SHARE_PRICE
+               FROM SHARE X
+               GROUP BY X.COMP_ID
+               ORDER BY X.SHARE_PRICE ASC
+               LIMIT 3"
+    shares <- dbGetQuery(db, query2)
+  }
+  
+  #Creates graph based on the selected shares
+  mygraph = ggplot(data = shares, aes(x = COMP_ID, y = SHARE_PRICE)) + geom_bar(stat = "identity") +
+    labs(title = "Share Prices", x = "Company ID", y = "Share Price")
+  
+  print(mygraph)
 }
 
 db = connect()
