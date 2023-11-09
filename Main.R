@@ -23,7 +23,6 @@ connect = function() {
   allShares <<- "data/individual-shares.xlsx"
 }
 
-
 seeMenu = function() {
   choice = 1; 
   
@@ -43,30 +42,59 @@ seeMenu = function() {
 }
 
 # Shows a line graph of a company's share price over the past month
-# NOTE: Will add options for choosing timeframe
 showShareLGraph = function() {
   companies = read_excel(market)
   continue = FALSE
   
-  # Displaying options
+  # Displaying company options
   print(companies[c("Symbol", "Name")], n = Inf)
   
   while (!continue) {
-    choice = readline("Enter a ticker symbol to select a company: ")
+    choice1 = readline("Enter a ticker symbol to select a company: ")
     
     # Checking if user input is valid
-    if (choice %in% companies[["Symbol"]]) {
+    if (choice1 %in% companies[["Symbol"]]) {
         continue = TRUE
     } else {
       print("That is not a valid ticker.")
     }
   }
   
-  company = read_excel(allShares, sheet = choice)
-  # print(company)
+  # Displaying time frame options
+  print("Time Frames:")
+  print("1) 1 Month")
+  print("2) 6 Months")
+  print("3) 1 Year")
+  print("4) 5 Years")
+  print("5) Max")
   
-  graph = ggplot(data = company, aes(x = Date, y = `Close/Last`, group = 1)) + geom_line()
-  print(graph)
+  choice2 = 0
+  
+  while (choice2 < 1 || choice2 > 5) {
+    choice2 = readline("Enter a time frame by the associated number: ")
+    company = NULL
+    
+    printGraph = function(time) {
+      company = read_excel(allShares, sheet = choice1, n_max = time)
+      
+      graph = ggplot(data = company, aes(x = Date, y = `Close/Last`, group = 1)) + geom_line()
+      print(graph)
+    }
+    
+    # Choosing amount of rows (days) to be used
+    result = switch(
+      choice2, 
+      "1" = printGraph(30), 
+      "2" = printGraph(180), 
+      "3" = printGraph(365), 
+      "4" = printGraph(1825), 
+      "5" = printGraph(Inf)
+    )
+    
+    if (choice2 < 1 || choice2 > 5) {
+      print("That is not a valid option.")
+    }
+  }
 }
 
 createHistogram = function(){
