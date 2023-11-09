@@ -3,28 +3,39 @@
 #install.packages("RSQLite")
 #install.packages("rstudioapi")
 #install.packages("tidyverse")
+#install.packages("readxl")
 
 library(DBI)
 library(RSQLite)
 library(rstudioapi)
 library(tidyverse)
+library(readxl)
+library(data.table)
+
+
+# Sets the working directory to location of R script
+currentDir = dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(currentDir)
+
 
 connect = function() {
-  # Sets the working directory to location of R script
-  currentDir = dirname(rstudioapi::getSourceEditorContext()$path)
-  setwd(currentDir)
-  
-  # Checks if connection is possible
-  if (dbCanConnect(RSQLite::SQLite(), "SMATDB.db")) {
-    db = dbConnect(RSQLite::SQLite(), "SMATDB.db")
-    print("Connection established.")
-    
-    return(db)
-  } else {
-    print("Database failed to connect.")
-    stop()
-  }
+  stockDataCsv = "constituents-financials_csv.csv"; 
+  stockData = fread(stockDataCsv)
 }
+
+# connect = function() {
+#   
+#   # Checks if connection is possible
+#   if (dbCanConnect(RSQLite::SQLite(), "SMATDB.db")) {
+#     db = dbConnect(RSQLite::SQLite(), "SMATDB.db")
+#     print("Connection established.")
+#     
+#     return(db)
+#   } else {
+#     print("Database failed to connect.")
+#     stop()
+#   }
+# }
 
 seeMenu = function(db) {
   choice = 1; 
@@ -38,9 +49,43 @@ seeMenu = function(db) {
     
     result = switch(
       choice, 
-      "1" = showShareLGraph(db),
+      "1" = showShareLGraph2(db),
       "2" = createHistogram(db)
     )
+  }
+}
+
+showShareLGraph2 = function(db) {
+  companies = fread(stockDataStr, select = c("Symbol", "Name"))
+  symbols = companies[, 1] # Creating a subset for comparison
+  
+  print(companies)
+  
+  repeat {
+    company = readline("Enter ticker symbol to select a company: ")
+    index = NULL; 
+    
+    # This loop may not be necessary
+    for (item in 1:nrow(symbols)) {
+      if (company == symbols[item]) {
+        index = item; 
+        break; 
+      }
+    }
+    
+    if (index) {
+      shares = stockData[index, "52 Week Low"]
+      print(shares)
+      break; 
+    }
+    # This can be done differently
+    
+    # shares = stockData[stockData$A == company]
+    # print(shares)
+    
+    # if (shares) {
+    #   break; 
+    # }
   }
 }
 
