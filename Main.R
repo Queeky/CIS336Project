@@ -1,43 +1,30 @@
 # You will need to run these lines if the packages aren't already installed
-#install.packages("DBI")
-#install.packages("RSQLite")
-#install.packages("rstudioapi")
-#install.packages("tidyverse")
-#install.packages("readxl")
+# install.packages("DBI")
+# install.packages("RSQLite")
+# install.packages("rstudioapi")
+# install.packages("tidyverse")
+# install.packages("readxl")
+# install.packages("openxlsx")
 
 library(DBI)
 library(RSQLite)
 library(rstudioapi)
 library(tidyverse)
 library(readxl)
-library(data.table)
-
-
-# Sets the working directory to location of R script
-currentDir = dirname(rstudioapi::getSourceEditorContext()$path)
-setwd(currentDir)
-
+library(openxlsx)
 
 connect = function() {
-  stockDataCsv = "constituents-financials_csv.csv"; 
-  stockData = fread(stockDataCsv)
+  # Setting the working directory to location of R script
+  currentDir <<- dirname(rstudioapi::getSourceEditorContext()$path)
+  setwd(currentDir)
+  
+  # Saving excel file paths
+  market <<- "data/constituents-financials.xlsx" 
+  allShares <<- "data/individual-shares.xlsx"
 }
 
-# connect = function() {
-#   
-#   # Checks if connection is possible
-#   if (dbCanConnect(RSQLite::SQLite(), "SMATDB.db")) {
-#     db = dbConnect(RSQLite::SQLite(), "SMATDB.db")
-#     print("Connection established.")
-#     
-#     return(db)
-#   } else {
-#     print("Database failed to connect.")
-#     stop()
-#   }
-# }
 
-seeMenu = function(db) {
+seeMenu = function() {
   choice = 1; 
   
   print("///// Stock Market Analysis Tool /////")
@@ -49,74 +36,40 @@ seeMenu = function(db) {
     
     result = switch(
       choice, 
-      "1" = showShareLGraph2(db),
-      "2" = createHistogram(db)
+      "1" = showShareLGraph(),
+      "2" = createHistogram()
     )
   }
 }
 
-showShareLGraph2 = function(db) {
-  companies = fread(stockDataStr, select = c("Symbol", "Name"))
-  symbols = companies[, 1] # Creating a subset for comparison
-  
-  print(companies)
-  
-  repeat {
-    company = readline("Enter ticker symbol to select a company: ")
-    index = NULL; 
-    
-    # This loop may not be necessary
-    for (item in 1:nrow(symbols)) {
-      if (company == symbols[item]) {
-        index = item; 
-        break; 
-      }
-    }
-    
-    if (index) {
-      shares = stockData[index, "52 Week Low"]
-      print(shares)
-      break; 
-    }
-    # This can be done differently
-    
-    # shares = stockData[stockData$A == company]
-    # print(shares)
-    
-    # if (shares) {
-    #   break; 
-    # }
-  }
-}
-
 # Shows a line graph of a company's share price over the past month
-showShareLGraph = function(db) {
-  query = "SELECT COMP_ID, COMP_NAME FROM COMPANY ORDER BY COMP_NAME ASC;"
+# NOTE: Will add options for choosing timeframe
+showShareLGraph = function() {
+  companies = read_excel(market)
+  continue = FALSE
   
-  companies = dbGetQuery(db, query)
+  # Displaying options
+  print(companies[c("Symbol", "Name")], n = Inf)
   
-  print(companies[c("COMP_NAME", "COMP_ID")])
-  
-  # Checking if the ID selected is valid
-  repeat {
-    company = readline("Select a company by COMP_ID: ")
+  while (!continue) {
+    choice = readline("Enter a ticker symbol to select a company: ")
     
-    query2 = paste("SELECT SHARE_DATE AS DATE, SHARE_PRICE AS PRICE FROM SHARE WHERE COMP_ID = ", company, " ORDER BY SHARE_DATE;")
-    shares = dbGetQuery(db, query2)
-    
-    # If rows exist, the COMP_ID is valid; otherwise, loop continues
-    if (nrow(shares) != 0) {
-      break
+    # Checking if user input is valid
+    if (choice %in% companies[["Symbol"]]) {
+        continue = TRUE
+    } else {
+      print("That is not a valid ticker.")
     }
-    
-    print("This is not a valid COMP_ID.")
   }
   
-  graph = ggplot(data = shares, aes(x = DATE, y = PRICE, group = 1)) + geom_line()
+  company = read_excel(allShares, sheet = choice)
+  # print(company)
+  
+  graph = ggplot(data = company, aes(x = Date, y = `Close/Last`, group = 1)) + geom_line()
   print(graph)
 }
 
-createHistogram = function(db){
+createHistogram = function(){
   
   # Asks for user input
   choice = readline("Select 1 to view the highest 3 shares and 2 to view the lowest 3 shares:  ")
@@ -149,6 +102,6 @@ createHistogram = function(db){
   print(mygraph)
 }
 
-db = connect()
-seeMenu(db)
-dbDisconnect(db)
+# Running the program
+connect()
+seeMenu()
