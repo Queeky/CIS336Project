@@ -1,71 +1,131 @@
-# You will need to run these lines if DBI, RSQLite, & rstudioapi aren't installed
-# You will need to run these lines if DBI, RSQLite, & rstudioapi aren't installed
-#install.packages("DBI")
-#install.packages("RSQLite")
+# You will need to run these lines if the packages aren't already installed
+
 #install.packages("rstudioapi")
 #install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
 
 
 
-library(DBI)
-library(RSQLite)
+
 library(rstudioapi)
 library(tidyverse)
+library(readxl)
+library(openxlsx)
 
 
 
-# Sets the working directory to location of R script
-currentDir = dirname(rstudioapi::getSourceEditorContext()$path)
-setwd(currentDir)
 
-
-
-# Checks if connection is possible
-if (!dbCanConnect(RSQLite::SQLite(), "SMATDB.db")) {
-  print("Database failed to connect.")
-} else {
-  db = dbConnect(RSQLite::SQLite(), "SMATDB.db")
+# Connect to the database
+connect = function() {
   
-  choice = readline("Select an action (0 to exit): ")
+  myData <- read_excel("C:/Users/abbys/Desktop/CIS336Project/MyData.xlsx")
   
-  result = switch(
-    choice, 
-    "2" = createHistogram()
-  )
+  path <- "C:/Users/abbys/Desktop/CIS336Project/MyData.xlsx"
+  
+  sheet_names <- getSheetNames(path)
+  
+  return(list(myData = myData, path = path, sheet_names = sheet_names))
+  
+}
+
+
+
+# Menu / main function
+seeMenu = function(db) {
+  
+  choice = 1
+  
+  print("///// Stock Market Analysis Tool /////")
+  
+  while (choice != 0) {
+    
+    print("[2] See histogram of the highest/lowest 3 share prices")
+    choice = readline("Select an action (0 to exit): ")
+    
+    result = switch(
+      choice, 
+      "2" = createHistogram("C:/Users/abbys/Desktop/CIS336Project/MyData.xlsx")
+      
+      
+    )
+  }
 }
 
 
 
 
-createHistogram = function(){
-  
-  # Asks for user input
-  choice = readline("Select 1 to view the highest 3 shares and 2 to view the lowest 3 shares:  ")
+# Function to create a histogram
+createHistogram = function(path) {
   
   
-  #Calculates highest shares
-  if (choice == "1") {
-    query1 <- "SELECT X.COMP_ID, X.SHARE_PRICE
-               FROM SHARE X
-               ORDER BY X.SHARE_PRICE DESC
-               LIMIT 3"
-    shares <- dbGetQuery(db, query1)
+  # Read the sheet names from the Excel file
+  sheets <- excel_sheets(path)
+  print("Company options to select from: ")
+  print(sheets)
+  
+  
+  
+  choice <- readline("Enter a company name to display shares: ")
+  
+  
+  
+  if (choice %in% sheets) {
+    
+    
+    # Read data from the specified sheet
+    company_data <- read_excel(path, sheet = choice)
+    
+    
+    # Sort data
+    high_shares <- company_data %>% arrange(desc(`Close/Last`))
+    low_shares <- company_data %>% arrange(`Close/Last`)
+    
+    
+    # Calculate highest / lowest shares
+    high_three_shares <- head(high_shares, 10)
+    low_three_shares <- head(low_shares, 10)
+    
+    
+    # Get user input for highest / lowest
+    print("[1] See histogram of the highest 3 share prices")
+    print("[2] See histogram of the lowest 3 share prices")
+    choice2 = readline("Select an action (0 to exit): ")
+    
+    
+    # Create graph based on user input
+    mygraph = switch(
+      choice2, 
+      
+      "1" =     mygraph <- ggplot(data = high_three_shares, aes(x = rownames(high_three_shares), y = `Close/Last`)) + 
+        geom_bar(stat = "identity") +
+        labs(title = "Highest Three Share Prices", x = choice, y = "Share Price"),
+      
+      "2" =     mygraph <- ggplot(data = low_three_shares, aes(x = rownames(low_three_shares), y = `Close/Last`)) + 
+        geom_bar(stat = "identity") +
+        labs(title = "Lowest Three Share Prices", x = choice, y = "Share Price")
+      
+    )
+    
+    
+    print(mygraph)
+    
+    
+  } else {
+    cat("The selected company is not within the Excel file \n")
   }
-  
-  
-  #Calculates lowest shares
-  if (choice == "2") {
-    query2 <- "SELECT X.COMP_ID, X.SHARE_PRICE
-               FROM SHARE X
-               ORDER BY X.SHARE_PRICE ASC
-               LIMIT 3"
-    shares <- dbGetQuery(db, query2)
-  }
-  
-
-  #Creates graph based on the selected shares
-  mygraph = ggplot(data = shares, aes(x = COMP_ID, y = SHARE_PRICE)) + geom_bar(stat = "identity") +
-    labs(title = "Share Prices", x = "Company ID", y = "Share Price")
-  
-  print(mygraph)
 }
+
+
+
+
+# Connect to the database
+db <- connect()
+
+
+# Call the main / menu function
+seeMenu(db)
+
+
+# Disconnect from the database
+dbDisconnect(db)
