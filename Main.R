@@ -1,7 +1,5 @@
 
-
-  
- # You will need to run these lines if the packages aren't already installed
+  # You will need to run these lines if the packages aren't already installed
 
 #install.packages("rstudioapi")
 #install.packages("tidyverse")
@@ -50,6 +48,8 @@ seeMenu = function() {
       "1" = showShareLGraph(),
       "2" = createHistogram(),
       "3" = createBoxPlot()
+
+      
     )
   }
 }
@@ -63,39 +63,56 @@ createBoxPlot <- function() {
   # Read data from Excel files
   marketData <- read_excel(market)
   shareData <- read_excel(allShares)
-   
+  
+  
+  
+  # Select number of companies
+  print("Select the number of companies you would like to see")
+  choice = as.numeric(readline("Enter a number (maximum of 10): "))
+  
+  
+  
+  
+  while (choice > 10 || choice < 1) {
+    print("Choice is not within range")
+    choice = as.numeric(readline("Enter a number (maximum of 10): "))
+  }
+  
   
   # Find top 10 companies
-  high_shares <- head(arrange(marketData, desc(Price)), 10)
+  high_comp <- head(arrange(marketData, desc(Price)), choice)
+  
   
   
   # Initialize a list to store data frames for each company
   company_data_list <- list()
   
   
+  
+  
   # Loop through each top company
-  for (i in 1:nrow(high_shares)) {
-    company_name <- as.character(high_shares[i, "Symbol"])  # Convert to character
+  for (i in 1:nrow(high_comp)) {
     
+    company_name <- as.character(high_comp[i, "Symbol"])  # Convert to character
     
     # Read data from the corresponding sheet
     company_data <- read_excel(allShares, sheet = company_name)
-    
     
     # Add the data to the list
     company_data_list[[company_name]] <- company_data
   }
   
   
-  
-  
-  # Combine the data frames into a single data frame for plotting
+  # Combine the data for graphing
   combined_data <- bind_rows(company_data_list, .id = "Company")
+  
+  
+  
   
   # Create boxplot
   myGraph <- ggplot(combined_data, aes(x = Company, y = Price)) +
     geom_boxplot() +
-    labs(title = "Boxplot of Top 10 Companies", x = "Company", y = "Share Price")
+    labs(title = "Top Companies", x = "Company", y = "Share Price")
   
   print(myGraph)
 }
@@ -112,41 +129,46 @@ createHistogram <- function() {
   marketData <- read_excel(market)
 
 
-  # Convert Price column to numeric
+  # Convert for sorting purposes
   marketData$Price <- as.numeric(as.character(marketData$Price))
 
   
   
   # Get user input for highest / lowest
-  print("[1] See histogram of the highest 3 share prices")
-  print("[2] See histogram of the lowest 3 share prices")
-  choice2 = readline("Select an action (0 to exit): ")
+  print("[1] See histogram of the highest share prices")
+  print("[2] See histogram of the lowest share prices")
+  choice = readline("Select an action: ")
+  
+  while (choice > 2 || choice < 1) {
+    print("Choice is not within range")
+    choice = as.numeric(readline("Select an action: "))
+  }
   
   
   
   # Select number of shares
   print("Select the number of shares you would like to see")
-  choice3 = as.numeric(readline("Enter a number (maximum of 15): "))
+  choice = as.numeric(readline("Enter a number (maximum of 15): "))
   
   
   
   
-  while (choice3 > 15 || choice3 < 0) {
+  while (choice > 15 || choice < 1) {
     print("Choice is not within range")
-    choice3 = as.numeric(readline("Enter a number (maximum of 15): "))
+    choice = as.numeric(readline("Enter a number (maximum of 15): "))
   }
   
   
   
   # Sort data
-  high_shares <- head(arrange(marketData, desc(Price)), choice3)
-  low_shares <- head(arrange(marketData, Price), choice3)
+  high_shares <- head(arrange(marketData, desc(Price)), choice)
+  low_shares <- head(arrange(marketData, Price), choice)
   
 
   
   # Create graph based on user input
   mygraph = switch(
-    choice2,
+    choice,
     "1" = ggplot(data = high_shares, aes(x = Symbol, y = Price)) +
       geom_bar(stat = "identity") +
       labs(title = "Highest Three Share Prices", x = "Company Symbol", y = "Share Price"),
