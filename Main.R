@@ -10,6 +10,7 @@ library(readxl)
 library(openxlsx)
 
 connect = function() {
+  
   # Setting the working directory to location of R script
   currentDir <<- dirname(rstudioapi::getSourceEditorContext()$path)
   setwd(currentDir)
@@ -17,6 +18,7 @@ connect = function() {
   # Saving excel file paths
   market <<- "data/constituents-financials.xlsx" 
   allShares <<- "data/individual-shares.xlsx"
+  
 }
 
 seeMenu = function() {
@@ -41,18 +43,18 @@ seeMenu = function() {
   }
 }
 
+
 createBoxPlot <- function() {
   
-  # Read data from Excel files
+
   marketData <- read_excel(market)
   shareData <- read_excel(allShares)
   
   
   
-  # Select number of companies
+  # Select the number of companies
   print("Select the number of companies you would like to see")
   choice = as.numeric(readline("Enter a number (maximum of 10): "))
-  
   
   
   
@@ -62,32 +64,36 @@ createBoxPlot <- function() {
   }
   
   
-  # Find top 10 companies
-  high_comp <- head(arrange(marketData, desc(Price)), choice)
   
+  # Find top companies
+  high_comp <- head(arrange(marketData, desc('Close/Last')), choice)
   
+
   
-  # Initialize a list to store data frames for each company
+  # Initialize empty list
   company_data_list <- list()
-  
   
   
   
   # Loop through each top company
   for (i in 1:nrow(high_comp)) {
     
-    company_name <- as.character(high_comp[i, "Symbol"])  # Convert to character
+    company_name <- as.character(high_comp[i, "Symbol"])  
     
-    # Read data from the corresponding sheet
+    # Read data from corresponding sheet
     company_data <- read_excel(allShares, sheet = company_name)
     
-    # Add the data to the list
+    # Add data to the list
     company_data_list[[company_name]] <- company_data
+    
   }
+  
   
   
   # Combine the data for graphing
   combined_data <- bind_rows(company_data_list, .id = "Company")
+  
+  
   
   # Create boxplot
   myGraph <- ggplot(combined_data, aes(x = Company, y = `Close/Last`)) +
@@ -95,6 +101,8 @@ createBoxPlot <- function() {
     labs(title = "Top Companies", x = "Company", y = "Share Price")
   
   print(myGraph)
+  
+  
 }
 
 
@@ -103,17 +111,17 @@ createHistogram <- function() {
   
   # read from excel file
   marketData <- read_excel(market)
-
-
+  
+  
   # Convert for sorting purposes
   marketData$Price <- as.numeric(as.character(marketData$Price))
-
   
   
   # Get user input for highest / lowest
   print("[1] See histogram of the highest share prices")
   print("[2] See histogram of the lowest share prices")
   choice = readline("Select an action: ")
+  
   
   while (choice > 2 || choice < 1) {
     print("Choice is not within range")
@@ -140,17 +148,19 @@ createHistogram <- function() {
   high_shares <- head(arrange(marketData, desc(Price)), choice2)
   low_shares <- head(arrange(marketData, Price), choice2)
   
-
+  
   
   # Create graph based on user input
   mygraph = switch(
     choice,
+    
     "1" = ggplot(data = high_shares, aes(x = Symbol, y = Price)) +
       geom_bar(stat = "identity") +
-      labs(title = "Highest Three Share Prices", x = "Company Symbol", y = "Share Price"),
+      labs(title = "Highest Share Prices", x = "Company Symbol", y = "Share Price"),
+    
     "2" = ggplot(data = low_shares, aes(x = Symbol, y = Price)) +
       geom_bar(stat = "identity") +
-      labs(title = "Lowest Three Share Prices", x = "Company Symbol", y = "Share Price")
+      labs(title = "Lowest Share Prices", x = "Company Symbol", y = "Share Price")
   )
   
   print(mygraph)
@@ -307,19 +317,19 @@ showShareLine = function() {
   result = switch(
     choice2, 
     "1" = {
-      days = 30
+      days = 22
       time = "1 month."
     }, 
     "2" = {
-      days = 180
+      days = 132
       time = "6 months."
     }, 
     "3" = {
-      days = 365
+      days = 269
       time = "1 year."
     }, 
     "4" = {
-      days = 1825
+      days = 1345
       time = "5 years."
     }, 
     "5" = {
@@ -342,8 +352,10 @@ showShareLine = function() {
   print(graph)
 }
 
+
 # Connect to the database
 connect()
+
 
 # Call the main / menu function
 seeMenu()
