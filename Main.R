@@ -80,28 +80,28 @@ selectEarning = function(earn, choices) {
   result = switch(
     earn, 
     "high" = {
-      companies = head(companies %>% arrange(desc(`Price/Earnings`)), n = 50)
-      print(companies[c("Symbol", "Name", "Price/Earnings")], n = Inf)
+      companies = head(companies %>% arrange(desc(`Price/Earnings`)), n = 30)
     }, 
     "low" = {
-      companies = head(companies %>% arrange(`Price/Earnings`), n = 50)
-      print(companies[c("Symbol", "Name", "Price/Earnings")], n = Inf)
+      companies = head(companies %>% arrange(`Price/Earnings`), n = 30)
     }
   )
+  
+  return(companies[["Symbol"]])
 }
 
 # Shows lollipop graph comparing the 52 Week High and 52 Week Low of select companies
 showShareLollipop = function() {
   print("Group data by:")
-  print("[1] 5 custom-selected companies")
-  print("[2] 10 custom-selected companies")
-  print("[3] 50 highest-earning companies")
-  print("[4] 50 lowest-earning companies")
+  print("[1] 2 custom-selected companies")
+  print("[2] 5 custom-selected companies")
+  print("[3] 10 custom-selected companies")
+  print("[4] 30 highest-earning companies")
+  print("[5] 30 lowest-earning companies")
   
   choice = 0
   choices = c()
   companies = read_excel(market)
-  # This should probably be global
   
   while (choice < 1 || choice > 4) {
     choice = readline("Enter the number of your choice: ")
@@ -111,19 +111,26 @@ showShareLollipop = function() {
     }
   }
   
+  order = NULL
+  
   result = switch(
     choice,
     "1" = {
-      choices = selectCustom(5, choices)
+      choices = selectCustom(2, choices)
     }, 
     "2" = {
-      choices = selectCustom(10, choices)
+      choices = selectCustom(5, choices)
     }, 
     "3" = {
-      choices = selectEarning("high", choices)
+      choices = selectCustom(10, choices)
     }, 
     "4" = {
+      choices = selectEarning("high", choices)
+      order = "highest"
+    }, 
+    "5" = {
       choices = selectEarning("low", choices)
+      order = "lowest"
     }
   )
   
@@ -143,29 +150,22 @@ showShareLollipop = function() {
   graph = ggplot(data) + 
     geom_segment( aes(x = `52 Week Low`, xend = `52 Week High`, y = Symbol, yend = Symbol)) + 
     geom_point( aes(x = `52 Week Low`, y = Symbol), color = rgb(0, 0, 0), size = 1) + 
-    geom_point( aes(x = `52 Week High`, y = Symbol), color = rgb(0, 0, 0), size = 1)
+    geom_point( aes(x = `52 Week High`, y = Symbol), color = rgb(0, 0, 0), size = 1) + 
+    labs(
+      x = "52 Week High/Low Difference", 
+      y = "Company", 
+      title = "52 Week High/Low Comparison", 
+      subtitle = paste("Showing the 52 week high/low difference of 30 companies with the ", order, " price/earnings.", sep = "")) + 
+    theme_classic()
   
   print(graph)
 }
 
-# Shows a line graph of a company's share price over the past month
+# Shows a line graph of a company's share price over a certain time frame
 showShareLGraph = function() {
-  companies = read_excel(market)
-  continue = FALSE
+  choices = c()
   
-  # Displaying company options
-  print(companies[c("Symbol", "Name")], n = Inf)
-  
-  while (!continue) {
-    choice1 = readline("Enter a ticker symbol to select a company: ")
-    
-    # Checking if user input is valid
-    if (choice1 %in% companies[["Symbol"]]) {
-        continue = TRUE
-    } else {
-      print("That is not a valid ticker.")
-    }
-  }
+  choices = selectCustom(1, choices)
   
   # Displaying time frame options
   print("Time Frames:")
@@ -174,13 +174,6 @@ showShareLGraph = function() {
   print("[3] 1 Year")
   print("[4] 5 Years")
   print("[5] Max")
-  
-  printGraph = function(time) {
-    company = read_excel(allShares, sheet = choice1, n_max = time)
-    
-    graph = ggplot(data = company, aes(x = Date, y = `Close/Last`, group = 1)) + geom_line()
-    print(graph)
-  }
   
   choice2 = 0
   
@@ -193,15 +186,46 @@ showShareLGraph = function() {
     }
   }
   
-  # Choosing amount of rows (days) to be used
+  days = NULL
+  time = NULL 
+  
+  # Choosing the amount of days (rows) to be used
   result = switch(
     choice2, 
-    "1" = printGraph(30), 
-    "2" = printGraph(180), 
-    "3" = printGraph(365), 
-    "4" = printGraph(1825), 
-    "5" = printGraph(Inf)
+    "1" = {
+      days = 30
+      time = "1 month."
+    }, 
+    "2" = {
+      days = 180
+      time = "6 months."
+    }, 
+    "3" = {
+      days = 365
+      time = "1 year."
+    }, 
+    "4" = {
+      days = 1825
+      time = "5 years."
+    }, 
+    "5" = {
+      days = Inf
+      time = "the max available time."
+    }
   )
+  
+  company = read_excel(allShares, sheet = choices, n_max = days)
+  
+  graph = ggplot(data = company, aes(x = Date, y = `Close/Last`, group = 1)) + 
+    geom_line() + 
+    labs(
+      x = "Date", 
+      y = "Share Price", 
+      title = "Share Price Evolution", 
+      subtitle = paste("Showing ", choices, "'s share prices over ", time, sep = "")) + 
+    theme_classic()
+  
+  print(graph)
 }
 
 # Running the program
