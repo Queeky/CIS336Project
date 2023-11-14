@@ -227,10 +227,10 @@ showLollipop = function() {
   choices = c()
   companies = read_excel(market)
   
-  while (choice < 1 || choice > 4) {
+  while (choice < 1 || choice > 5) {
     choice = readline("Enter the number of your choice: ")
     
-    if (choice < 1 || choice > 4) {
+    if (choice < 1 || choice > 5) {
       print("That is not a valid option.")
     }
   }
