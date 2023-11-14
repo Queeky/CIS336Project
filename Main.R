@@ -1,6 +1,3 @@
-
-
-
 # You will need to run these lines if the packages aren't already installed
 
 #install.packages("rstudioapi")
@@ -76,7 +73,7 @@ createBoxPlot <- function() {
   
   
   
-  # Find top 10 companies
+  # Find top companies
   high_comp <- head(arrange(marketData, desc('Close/Last')), choice)
   
 
@@ -88,13 +85,15 @@ createBoxPlot <- function() {
   
   # Loop through each top company
   for (i in 1:nrow(high_comp)) {
-    company_name <- as.character(high_comp[i, "Symbol"])  # Convert to character
+    
+    company_name <- as.character(high_comp[i, "Symbol"])  
     
     # Read data from corresponding sheet
     company_data <- read_excel(allShares, sheet = company_name)
     
     # Add data to the list
     company_data_list[[company_name]] <- company_data
+    
   }
   
   
@@ -126,11 +125,11 @@ createHistogram <- function() {
   marketData$Price <- as.numeric(as.character(marketData$Price))
   
   
-  
   # Get user input for highest / lowest
   print("[1] See histogram of the highest share prices")
   print("[2] See histogram of the lowest share prices")
   choice = readline("Select an action: ")
+  
   
   while (choice > 2 || choice < 1) {
     print("Choice is not within range")
@@ -162,12 +161,14 @@ createHistogram <- function() {
   # Create graph based on user input
   mygraph = switch(
     choice,
+    
     "1" = ggplot(data = high_shares, aes(x = Symbol, y = Price)) +
       geom_bar(stat = "identity") +
-      labs(title = "Highest Three Share Prices", x = "Company Symbol", y = "Share Price"),
+      labs(title = "Highest Share Prices", x = "Company Symbol", y = "Share Price"),
+    
     "2" = ggplot(data = low_shares, aes(x = Symbol, y = Price)) +
       geom_bar(stat = "identity") +
-      labs(title = "Lowest Three Share Prices", x = "Company Symbol", y = "Share Price")
+      labs(title = "Lowest Share Prices", x = "Company Symbol", y = "Share Price")
   )
   
   print(mygraph)
@@ -359,8 +360,10 @@ showShareLine = function() {
   print(graph)
 }
 
+
 # Connect to the database
 connect()
+
 
 # Call the main / menu function
 seeMenu()
