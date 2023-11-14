@@ -148,21 +148,21 @@ createHistogram <- function() {
   
   # Select number of shares
   print("Select the number of shares you would like to see")
-  choice = as.numeric(readline("Enter a number (maximum of 15): "))
+  choice2 = as.numeric(readline("Enter a number (maximum of 15): "))
   
   
   
   
-  while (choice > 15 || choice < 1) {
+  while (choice2 > 15 || choice2 < 1) {
     print("Choice is not within range")
-    choice = as.numeric(readline("Enter a number (maximum of 15): "))
+    choice2 = as.numeric(readline("Enter a number (maximum of 15): "))
   }
   
   
   
   # Sort data
-  high_shares <- head(arrange(marketData, desc(Price)), choice)
-  low_shares <- head(arrange(marketData, Price), choice)
+  high_shares <- head(arrange(marketData, desc(Price)), choice2)
+  low_shares <- head(arrange(marketData, Price), choice2)
   
 
   
