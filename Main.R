@@ -89,9 +89,8 @@ createBoxPlot <- function() {
   # Combine the data for graphing
   combined_data <- bind_rows(company_data_list, .id = "Company")
   
-  
   # Create boxplot
-  myGraph <- ggplot(combined_data, aes(x = Company, y = Price)) +
+  myGraph <- ggplot(combined_data, aes(x = Company, y = `Close/Last`)) +
     geom_boxplot() +
     labs(title = "Top Companies", x = "Company", y = "Share Price")
   
