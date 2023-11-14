@@ -66,7 +66,7 @@ createBoxPlot <- function() {
   
   
   # Find top companies
-  high_comp <- head(arrange(marketData, desc('Close/Last')), choice)
+  high_comp <- head(arrange(marketData, desc(Price)), choice)
   
 
   
